@@ -26,13 +26,13 @@
 
 ### 📸 Screenshots
 
-**Main Interface - Light Mode**
-
-![Modern UI Light Mode](./static/1.png)
-
 **Main Interface - Dark Mode**
 
-![Modern UI Dark Mode](./static/2.png)
+![Modern UI Dark Mode](./static/1.png)
+
+**Main Interface - Light Mode**
+
+![Modern UI Light Mode](./static/2.png)
 
 ### 🎯 Use Cases
 
@@ -305,13 +305,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 📸 程序截图
 
-**主界面 - 亮色模式**
-
-![现代化UI 亮色模式](./static/1.png)
-
 **主界面 - 暗色模式**
 
-![现代化UI 暗色模式](./static/2.png)
+![现代化UI 暗色模式](./static/1.png)
+
+**主界面 - 亮色模式**
+
+![现代化UI 亮色模式](./static/2.png)
 
 ### 🎯 使用场景
 
