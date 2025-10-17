@@ -581,4 +581,6 @@ If you encounter any issues or have questions, please:
 
 ---
 
-**Made with ❤️ by the WhisprRT Team**
+**Made with ❤️ by the talkaFlow Team**
+
+📧 Contact: info@talkaflow.com
