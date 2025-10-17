@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisprRT - 实时语音转文字</title>
+    <link rel="stylesheet" href="/static/bootstrap-icons.css">
+    <style>
+        /* ========== Modern Design System ========== */
+        :root {
+            /* Light Theme Colors */
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #eef2ff;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+
+            /* Neutral Colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+
+            /* Glass Effect */
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.2);
+
+            /* Spacing */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+
+            /* Transitions */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --primary-light: #1e1b4b;
+            --secondary: #a78bfa;
+            --success: #34d399;
+            --danger: #f87171;
+
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #64748b;
+            --border: #334155;
+            --shadow: rgba(0, 0, 0, 0.3);
+
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: var(--transition);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========== Background Gradient ========== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ========== Container ========== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ========== Header ========== */
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ========== Theme & Language Toggle ========== */
+        .fixed-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .theme-toggle,
+        .lang-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px var(--shadow);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover,
+        .lang-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ========== Grid Layout ========== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* ========== Cards ========== */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px var(--shadow);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* ========== Status Indicator ========== */
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .status-dot.active {
+            background: var(--success);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.1); }
+        }
+
+        /* ========== Transcription Area ========== */
+        #transcription {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            min-height: 450px;
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            font-size: 1rem;
+            line-height: 1.7;
+            transition: var(--transition);
+        }
+
+        #transcription::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #transcription::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        #transcription::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .transcript-entry {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--primary);
+            transition: var(--transition);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .timestamp {
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .transcript-text {
+            color: var(--text-primary);
+        }
+
+        /* ========== Controls ========== */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ========== Settings Panel ========== */
+        .settings-card {
+            position: sticky;
+            top: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .form-select,
+        .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .form-select:focus,
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-switch {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.5rem 0;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-switch-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .switch-input {
+            display: none;
+        }
+
+        .switch-input:checked + .switch {
+            background: var(--primary);
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .switch-input:checked + .switch::after {
+            transform: translateX(20px);
+        }
+
+        .switch-label {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* ========== Display Mode Toggle ========== */
+        .mode-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+
+        .mode-btn {
+            padding: 0.4rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 1px 4px rgba(99, 102, 241, 0.3);
+        }
+
+        /* ========== Usage Guide ========== */
+        .usage-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .usage-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.75rem;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .usage-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        /* ========== Toast Notifications ========== */
+        .toast-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            padding: 1rem;
+            box-shadow: 0 8px 24px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast-error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast-info {
+            border-left: 4px solid var(--info);
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: var(--transition);
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        /* ========== Animations ========== */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== Responsive Design ========== */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-card {
+                position: relative;
+                top: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .fixed-controls {
+                top: 0.5rem;
+                right: 0.5rem;
+            }
+
+            #transcription {
+                min-height: 350px;
+                max-height: calc(100vh - 450px);
+            }
+
+            .form-group {
+                grid-template-columns: 80px 1fr;
+                gap: 0.5rem;
+            }
+
+            .form-switch {
+                grid-template-columns: 80px 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Controls -->
+    <div class="fixed-controls">
+        <button class="lang-toggle" title="Switch Language">
+            <span id="lang-icon">EN</span>
+        </button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+            <i class="bi bi-moon-fill" id="theme-icon"></i>
+        </button>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="bi bi-mic-fill"></i>
+                </div>
+            </div>
+            <h1>WhisprRT</h1>
+            <p class="subtitle">基于 Whisper 的本地实时语音转文字工具 • 完全离线运行 • 保护隐私</p>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Transcription Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="status-container">
+                        <div class="status-dot" id="status-dot"></div>
+                        <span id="status-text">准备就绪</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="copyTranscript()" style="padding: 0.5rem 1rem; margin: 0;">
+                        <i class="bi bi-clipboard"></i> 复制全文
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="transcription"></div>
+
+                    <div class="controls">
+                        <button id="startBtn" class="btn btn-primary" onclick="startListening()">
+                            <i class="bi bi-mic-fill"></i> 开始转写
+                        </button>
+                        <button id="stopBtn" class="btn btn-danger" onclick="stopListening()" disabled>
+                            <i class="bi bi-stop-fill"></i> 停止转写
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearTranscript()">
+                            <i class="bi bi-trash"></i> 清空记录
+                        </button>
+                        <button class="btn btn-success" onclick="saveText()">
+                            <i class="bi bi-download"></i> 保存文字
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Sidebar -->
+            <div class="settings-card">
+                <!-- Settings Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="bi bi-gear-fill"></i> 设置</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">音频设备</label>
+                            <select id="deviceSelect" class="form-select" onchange="selectDevice()">
+                                <option value="default">加载中...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">模型</label>
+                            <select id="modelSelect" class="form-select" onchange="changeModel()">
+                                <option value="tiny">Tiny - 最快速度</option>
+                                <option value="base">Base - 基础模型</option>
+                                <option value="small">Small - 平衡性能</option>
+                                <option value="large-v3-turbo" selected>Large V3 Turbo - 最高精度</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">语言</label>
+                            <select id="languageSelect" class="form-select" onchange="changeLanguage()">
+                                <option value="zh" selected>中文</option>
+                                <option value="en">English</option>
+                                <option value="auto">自动检测</option>
+                            </select>
+                        </div>
+
+                        <div class="form-switch">
+                            <label class="form-label">时间戳</label>
+                            <div class="form-switch-container">
+                                <input type="checkbox" class="switch-input" id="showTimestamp" checked onchange="toggleTimestamp()">
+                                <label for="showTimestamp" class="switch"></label>
+                                <label for="showTimestamp" class="switch-label">显示</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">显示模式</label>
+                            <div class="mode-toggle">
+                                <button class="mode-btn active" data-mode="segments" onclick="changeDisplayMode('segments')">分段</button>
+                                <button class="mode-btn" data-mode="transcript" onclick="changeDisplayMode('transcript')">连续</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usage Guide Card -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <span><i class="bi bi-question-circle-fill"></i> 使用说明</span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="usage-list">
+                            <li>选择音频输入设备</li>
+                            <li>选择合适的模型和语言</li>
+                            <li>点击"开始转写"按钮</li>
+                            <li>开始说话进行转写</li>
+                            <li>完成后点击"停止转写"</li>
+                            <li>可复制或保存转写结果</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Load app.js FIRST so functions are available -->
+    <script src="/static/app.js"></script>
+
+    <script>
+        // WebSocket and state management
+        let socket = null;
+        let isConnected = false;
+        let isRunning = false;
+        let showTimestamp = true;
+        let transcriptList = [];
+        let currentMode = "segments";
+        let audioDevices = [];
+        let defaultDeviceId = null;
+
+        const STORAGE_KEY = 'whisprrt_transcript_list';
+
+        // DOM Elements
+        const transcriptionDiv = document.getElementById('transcription');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const deviceSelect = document.getElementById('deviceSelect');
+        const modelSelect = document.getElementById('modelSelect');
+        const languageSelect = document.getElementById('languageSelect');
+        const showTimestampCheckbox = document.getElementById('showTimestamp');
+
+        // Theme Management
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+
+            const icon = document.getElementById('theme-icon');
+            icon.className = newTheme === 'light' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+
+            localStorage.setItem('theme', newTheme);
+            showToast(t('toastThemeSwitched'), newTheme === 'light' ? t('toastLightMode') : t('toastDarkMode'), 'info');
+        }
+
+        // Initialize theme on load
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const icon = document.getElementById('theme-icon');
+            icon.className = savedTheme === 'light' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+        }
+
+        // Toast Notifications
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const iconMap = {
+                success: 'bi-check-circle-fill',
+                error: 'bi-x-circle-fill',
+                info: 'bi-info-circle-fill'
+            };
+
+            toast.innerHTML = `
+                <i class="bi ${iconMap[type]} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // LocalStorage Management
+        function loadTranscriptFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    transcriptList = JSON.parse(stored);
+                    renderTranscription();
+                    if (transcriptList.length > 0) {
+                        showToast(t('toastWelcomeBack'), `${t('toastRestored')} ${transcriptList.length} ${t('toastRecords')}`, 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+                transcriptList = [];
+            }
+        }
+
+        function saveTranscriptToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(transcriptList));
+            } catch (error) {
+                console.error('Save error:', error);
+            }
+        }
+
+        function clearTranscriptFromStorage() {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch (error) {
+                console.error('Clear error:', error);
+            }
+        }
+
+        // WebSocket Connection
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = function() {
+                console.log('WebSocket connected');
+                isConnected = true;
+                showToast(t('toastConnected'), t('toastConnectedMsg'), 'success');
+                loadAudioDevices();
+            };
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                switch(data.event) {
+                    case 'transcription':
+                        handleTranscription(data.data);
+                        break;
+                    case 'status':
+                        handleStatus(data.data);
+                        break;
+                    case 'error':
+                        showToast('错误', data.data.message, 'error');
+                        break;
+                    case 'clear':
+                        transcriptionDiv.innerHTML = '';
+                        break;
+                }
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket disconnected');
+                isConnected = false;
+
+                setTimeout(function() {
+                    if (!isConnected) {
+                        showToast(t('toastReconnect'), t('toastReconnectMsg'), 'info');
+                        connectWebSocket();
+                    }
+                }, 3000);
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                showToast(t('toastError'), 'Connection error. Please refresh the page.', 'error');
+            };
+        }
+
+        // Handle transcription data
+        function handleTranscription(data) {
+            transcriptList.push({
+                text: data.text,
+                timestamp: data.timestamp
+            });
+            saveTranscriptToStorage();
+            renderTranscription();
+        }
+
+        // Handle status updates
+        function handleStatus(data) {
+            if (data.status === 'started' || data.status === 'already_started') {
+                updateStatus(true);
+            } else if (data.status === 'stopped' || data.status === 'already_stopped') {
+                updateStatus(false);
+            }
+        }
+
+        // Update UI status
+        function updateStatus(running) {
+            isRunning = running;
+
+            if (running) {
+                statusDot.classList.add('active');
+                statusText.textContent = t('statusTranscribing');
+            } else {
+                statusDot.classList.remove('active');
+                statusText.textContent = t('statusReady');
+            }
+
+            startBtn.disabled = running;
+            stopBtn.disabled = !running;
+            modelSelect.disabled = running;
+            deviceSelect.disabled = running;
+        }
+
+        // Render transcription
+        function renderTranscription() {
+            transcriptionDiv.innerHTML = '';
+
+            if (currentMode === 'transcript') {
+                const entry = document.createElement('div');
+                entry.className = 'transcript-entry';
+
+                if (showTimestamp && transcriptList.length > 0) {
+                    const timestamp = document.createElement('span');
+                    timestamp.className = 'timestamp';
+                    timestamp.textContent = transcriptList[0].timestamp;
+                    entry.appendChild(timestamp);
+                }
+
+                const text = document.createElement('span');
+                text.className = 'transcript-text';
+                text.textContent = transcriptList.map(item => item.text).join(' ');
+                entry.appendChild(text);
+                transcriptionDiv.appendChild(entry);
+            } else {
+                transcriptList.forEach(item => {
+                    const entry = document.createElement('div');
+                    entry.className = 'transcript-entry';
+
+                    if (showTimestamp && item.timestamp) {
+                        const timestamp = document.createElement('span');
+                        timestamp.className = 'timestamp';
+                        timestamp.textContent = item.timestamp;
+                        entry.appendChild(timestamp);
+                    }
+
+                    const text = document.createElement('span');
+                    text.className = 'transcript-text';
+                    text.textContent = item.text;
+                    entry.appendChild(text);
+
+                    transcriptionDiv.appendChild(entry);
+                });
+            }
+
+            transcriptionDiv.scrollTop = transcriptionDiv.scrollHeight;
+        }
+
+        // Audio device management
+        function loadAudioDevices() {
+            fetch('/audio_devices')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        showToast(t('toastError'), data.message, 'error');
+                        return;
+                    }
+
+                    audioDevices = data.devices;
+                    defaultDeviceId = data.default;
+
+                    deviceSelect.innerHTML = `<option value="default">${t('defaultDevice')}</option>`;
+
+                    audioDevices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        option.textContent = device.name;
+                        if (device.id === defaultDeviceId || device.default) {
+                            option.textContent += ' (默认)';
+                        }
+                        deviceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    showToast(t('toastError'), 'Failed to load audio devices', 'error');
+                });
+        }
+
+        function selectDevice() {
+            if (isRunning) {
+                showToast(t('toastInfo'), t('toastStopFirst'), 'info');
+                loadAudioDevices();
+                return;
+            }
+
+            const deviceId = deviceSelect.value;
+
+            fetch('/select_device', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ device_id: deviceId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.status === 'success' ? '成功' : '错误', data.message, data.status);
+                if (data.status !== 'success') loadAudioDevices();
+            })
+            .catch(error => {
+                showToast(t('toastError'), 'Request failed', 'error');
+                loadAudioDevices();
+            });
+        }
+
+        // Control functions
+        function startListening() {
+            fetch('/start')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'started') {
+                        updateStatus(true);
+                        showToast(t('toastStarted'), t('toastStartedMsg'), 'success');
+                    } else if (data.status === 'already_started') {
+                        showToast(t('toastInfo'), t('toastAlreadyRunning'), 'info');
+                    } else {
+                        showToast(t('toastError'), data.message || 'Failed to start', 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast(t('toastError'), 'Request failed', 'error');
+                });
+        }
+
+        function stopListening() {
+            fetch('/stop')
+                .then(response => response.json())
+                .then(data => {
+                    updateStatus(false);
+                    showToast(t('toastStopped'), t('toastStoppedMsg'), 'info');
+                })
+                .catch(error => {
+                    showToast(t('toastError'), 'Request failed', 'error');
+                });
+        }
+
+        function clearTranscript() {
+            fetch('/clear')
+                .then(response => response.json())
+                .then(data => {
+                    transcriptList = [];
+                    clearTranscriptFromStorage();
+                    renderTranscription();
+                    showToast(t('toastCleared'), t('toastClearedMsg'), 'info');
+                })
+                .catch(error => {
+                    showToast(t('toastError'), 'Request failed', 'error');
+                });
+        }
+
+        function saveText() {
+            if (transcriptionDiv.textContent.trim() === '') {
+                showToast(t('toastInfo'), t('toastNoContent'), 'info');
+                return;
+            }
+
+            fetch('/save')
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    }
+                    throw new Error('Save failed');
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'transcript_output.txt';
+                    link.click();
+                    showToast(t('toastSaved'), t('toastSavedMsg'), 'success');
+                })
+                .catch(error => {
+                    showToast(t('toastError'), 'Save failed', 'error');
+                });
+        }
+
+        function copyTranscript() {
+            const entries = transcriptionDiv.querySelectorAll('.transcript-entry');
+
+            if (entries.length === 0) {
+                showToast(t('toastInfo'), t('toastNoCopyContent'), 'info');
+                return;
+            }
+
+            let text = '';
+            entries.forEach(entry => {
+                const timestampEl = entry.querySelector('.timestamp');
+                const textEl = entry.querySelector('.transcript-text');
+
+                if (timestampEl && textEl) {
+                    text += `${timestampEl.textContent} ${textEl.textContent}\n`;
+                } else if (textEl) {
+                    text += `${textEl.textContent}\n`;
+                }
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(t('toastCopied'), t('toastCopiedMsg'), 'success');
+            }).catch(() => {
+                showToast(t('toastError'), 'Copy failed', 'error');
+            });
+        }
+
+        function changeModel() {
+            if (isRunning) {
+                showToast(t('toastInfo'), t('toastStopFirst'), 'info');
+                return;
+            }
+
+            const model = modelSelect.value;
+
+            fetch('/change_model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: model })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.status === 'success' ? '成功' : '错误', data.message, data.status);
+            })
+            .catch(error => {
+                showToast(t('toastError'), 'Request failed', 'error');
+            });
+        }
+
+        function changeLanguage() {
+            const language = languageSelect.value;
+
+            fetch('/change_language', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: language })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showToast(data.status === 'success' ? '成功' : '错误', data.message, data.status);
+            })
+            .catch(error => {
+                showToast(t('toastError'), 'Request failed', 'error');
+            });
+        }
+
+        function toggleTimestamp() {
+            showTimestamp = showTimestampCheckbox.checked;
+
+            fetch('/toggle_timestamp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ show_timestamp: showTimestamp })
+            })
+            .then(response => response.json())
+            .then(data => {
+                renderTranscription();
+                showToast(t('toastSettingsUpdated'), showTimestamp ? t('toastTimestampOn') : t('toastTimestampOff'), 'info');
+            })
+            .catch(error => {
+                showToast(t('toastError'), 'Request failed', 'error');
+            });
+        }
+
+        function changeDisplayMode(mode) {
+            currentMode = mode;
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+
+            renderTranscription();
+        }
+
+        // Check server status and sync UI
+        function checkServerStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Sync UI with server status
+                        updateStatus(data.running);
+                        console.log('Server status synced:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to check server status:', error);
+                });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', function() {
+            initTheme();
+            initLanguage();
+            loadTranscriptFromStorage();
+            connectWebSocket();
+            checkServerStatus(); // Check status on load
+
+            // Add event listener for language toggle button
+            document.querySelector('.lang-toggle').addEventListener('click', function() {
+                if (typeof toggleLanguage === 'function') {
+                    toggleLanguage();
+                }
+            });
+        });
+
+        // Stop engine when page is closed or refreshed
+        window.addEventListener('beforeunload', function() {
+            if (isRunning) {
+                // Send synchronous stop request
+                navigator.sendBeacon('/stop');
+            }
+        });
+    </script>
+</body>
+</html>
